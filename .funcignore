@@ -1,0 +1,16 @@
+.git*
+.vscode
+.streamlit
+local.settings.json
+__azurite_db*__.json
+__blobstorage__
+__queuestorage__
+.venv
+.python_packages
+__pycache__
+test
+*.xlsx
+tela_caixa.py
+testar_api.py
+estudos_streamlit.md
+README.md
