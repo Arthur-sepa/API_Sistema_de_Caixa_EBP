@@ -28,7 +28,7 @@
     * **Programação Defensiva:** Validação estrutural do payload (JSON) recebido para evitar quebras por falta de dados.
     * **Regras de Negócio (Trava de Segurança):** Antes de qualquer escrita, a API realiza a leitura dinâmica do estoque. Se a quantidade solicitada for maior que a disponível, a requisição é abortada com erro `HTTP 400 (Bad Request)`, protegendo a base contra estoque negativo.
     * **Persistência:** Consulta e atualização das tabelas `estoque` e `vendas` no Supabase.
-    * **Endpoint HTTP:** `POST /api/GerarPlanilhaVendas`.
+    * **Endpoints HTTP:** `POST /api/GerarPlanilhaVendas` registra vendas e `GET /api/ObterVendas` fornece os dados do dashboard.
 
     ---
 

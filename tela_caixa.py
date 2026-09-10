@@ -100,45 +100,39 @@ if menu == "🛒 Caixa Registradora":
                         st.error(f"❌ Não foi possível conectar com a API: {erro}")
 
 # ==========================================
-# TELA 2: O DASHBOARD DE DADOS (SUPABASE)
+# TELA 2: O DASHBOARD DE DADOS
 # ==========================================
 elif menu == "📊 Dashboard de Vendas":
     st.title("📊 Painel de Desempenho")
     st.markdown("---")
-    
+
     try:
-        from supabase import create_client
-        
-        supabase_url = st.secrets.get("SUPABASE_URL", os.getenv("SUPABASE_URL"))
-        supabase_key = st.secrets.get("SUPABASE_KEY", os.getenv("SUPABASE_KEY"))
-        
-        if not supabase_url or not supabase_key:
-            st.error("❌ Credenciais do Supabase não encontradas no secrets.toml!")
+        url_api = st.secrets.get(
+            "API_URL",
+            os.getenv("API_URL", "http://localhost:7071/api/GerarPlanilhaVendas"),
+        )
+        url_vendas = url_api.rsplit("/", 1)[0] + "/ObterVendas"
+        resposta = requests.get(url_vendas, timeout=30)
+
+        if resposta.status_code != 200:
+            st.error(f"❌ Erro ao carregar vendas: {resposta.text}")
         else:
-            supabase = create_client(supabase_url, supabase_key)
-            resposta = supabase.table("vendas").select("*").execute()
-            
-            df = pd.DataFrame(resposta.data)
-            
+            df = pd.DataFrame(resposta.json())
+
             if df.empty:
                 st.info("📭 Nenhuma venda registrada no banco de dados ainda.")
             else:
-                st.write(f"### Dados vindos direto do Supabase ({len(df)} registros encontrados)")
-                
-                # Exibe a tabela crua para conferência das colunas exatas do Supabase
+                st.write(f"### Vendas registradas ({len(df)} registros)")
                 st.dataframe(df)
-                
-                # Normaliza os nomes das colunas para maiúsculo
-                df.columns = df.columns.str.upper()
-                
-                col_titulo = "TITULO" if "TITULO" in df.columns else df.columns[1]
-                col_valor = "VALOR_TOTAL" if "VALOR_TOTAL" in df.columns else df.columns[5]
-                
+
+                col_titulo = "titulo"
+                col_valor = "valor_total"
                 df[col_titulo] = df[col_titulo].astype(str).str.upper().str.strip()
-                df[col_valor] = pd.to_numeric(df[col_valor], errors='coerce').fillna(0.0)
-                
+                df[col_valor] = pd.to_numeric(df[col_valor], errors="coerce").fillna(0.0)
                 faturamento = df.groupby(col_titulo)[col_valor].sum().reset_index()
                 st.bar_chart(data=faturamento, x=col_titulo, y=col_valor)
-                
-    except Exception as e:
-        st.warning(f"Erro ao carregar dados do Supabase: {e}")
+
+    except requests.RequestException as erro:
+        st.error(f"❌ Não foi possível consultar as vendas: {erro}")
+    except (KeyError, ValueError) as erro:
+        st.error(f"❌ Formato inesperado dos dados de vendas: {erro}")

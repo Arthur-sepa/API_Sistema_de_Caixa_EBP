@@ -2,9 +2,29 @@ import azure.functions as func
 import logging
 import datetime
 import os
+import json
 from supabase import create_client, Client
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
+
+@app.route(route="ObterVendas", methods=["GET"])
+def ObterVendas(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info('Consultando vendas para o dashboard...')
+
+    try:
+        url = os.environ.get("SUPABASE_URL")
+        key = os.environ.get("SUPABASE_KEY")
+        supabase: Client = create_client(url, key)
+        resposta = supabase.table("vendas").select("*").execute()
+
+        return func.HttpResponse(
+            json.dumps(resposta.data, default=str),
+            status_code=200,
+            mimetype="application/json",
+        )
+    except Exception as erro:
+        logging.error(f"Erro ao consultar vendas: {erro}")
+        return func.HttpResponse("Erro interno ao consultar vendas.", status_code=500)
 
 @app.route(route="GerarPlanilhaVendas", methods=["POST"])
 def GerarPlanilhaVendas(req: func.HttpRequest) -> func.HttpResponse:
